@@ -10,11 +10,12 @@ Go-Session-Client is a simple and lightweight HTTP client for Go, with support f
 
 ## Installation
 
-```bash
+
 go get github.com/yan00s/go-session-client
 
-Example Usage
+Example Usage:
 
+```Go
 package main
 
 import (
