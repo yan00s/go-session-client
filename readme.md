@@ -10,10 +10,6 @@ Go-Session-Client is a simple and lightweight HTTP client for Go, with support f
 
 ## Installation
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 09802ea (Moved files from src to root and delete example.go)
 go get github.com/yan00s/go-session-client
 
 Example Usage:
