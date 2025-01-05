@@ -3,6 +3,7 @@ package gosessionclient
 import (
 	"crypto/tls"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -23,6 +24,12 @@ func (session *Session) SetProxy(proxy string, timeout int) error {
 	if err != nil {
 		return customErr("failed to parse proxy URL", err)
 	}
+
+	conn, err := net.DialTimeout("tcp", parsedURL.Host, time.Duration(timeout)*time.Second)
+	if err != nil {
+		return customErr("failed to connect to proxy", err)
+	}
+	defer conn.Close()
 
 	tr, err := getTransport(parsedURL)
 
