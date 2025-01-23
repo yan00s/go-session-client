@@ -19,24 +19,35 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"time"
 
 	session "github.com/yan00s/go-session-client"
 )
 
 func main() {
-	ses := session.CreateSession()
-	timeout := 15 // in seconds
+	ses := session.CreateSession(true)
 
-	if err := ses.SetProxy("http://username:passw@100.100.100.100:2000", timeout); err != nil {
-		fmt.Println(fmt.Errorf("err in set up proxy: %w", err))
-		os.Exit(1)
+	/// Trying to set Proxy
+	proxyStr := "http://username:passw@100.100.100.100:2000"
+	timeout := 3 // seconds
+	if err := ses.SetProxy(proxyStr, timeout); err != nil {
+		fmt.Println(fmt.Errorf("Error in setting up proxy: %w", err))
+	}
+	///
+
+	fmt.Println()
+
+	/// Trying to make a get request
+	fmt.Println("Trying to make request with 1 try on icanhazip.com with a 10 second timeout per request")
+	resp := ses.SendReq("https://icanhazip.com", "GET", 1, 10*time.Second, 0)
+
+	if resp.Err != nil {
+		fmt.Println("Error in making request:", resp.Err.Error())
+		return
 	}
 
-	resp := ses.SendReq("https://icanhazip.com", "GET")
-
-	fmt.Println("response:", resp.String())
-	fmt.Println("status:", resp.Status)
-	fmt.Println("errors:", resp.Err)
+	fmt.Println("Response:", resp.String())
+	fmt.Println("Status:", resp.Status)
+	///
 }
 ```
