@@ -8,7 +8,9 @@ type Session struct {
 }
 
 type Response struct {
-	Body   []byte
-	Status int
-	Err    error
+	Body    []byte
+	Headers http.Header
+	Cookies []*http.Cookie
+	Status  int
+	Err     error
 }

@@ -5,9 +5,14 @@ import (
 	"net/http"
 )
 
-func GenerateHeaders() http.Header {
+func GenerateHeaders(pcAgent bool) http.Header {
+	var agent string
 	headers := http.Header{}
-	agent := GeneratePcAgent()
+	if pcAgent {
+		agent = GeneratePcAgent()
+	} else {
+		agent = GenerateMobileAgent()
+	}
 	headers.Set("User-Agent", agent)
 	headers.Set("Content-Type", "application/json") // or can be application/x-www-form-urlencoded
 	headers.Set("Accept", "*/*")
