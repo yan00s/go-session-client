@@ -39,7 +39,7 @@ func main() {
 
 	/// Trying to make a get request
 	fmt.Println("Trying to make request with 1 try on icanhazip.com with a 10 second timeout per request")
-	resp := ses.SendReq("https://icanhazip.com", "GET", 1, 10*time.Second, 0)
+	resp := ses.SendReq("https://icanhazip.com", "GET", 5*time.Second)
 
 	if resp.Err != nil {
 		fmt.Println("Error in making request:", resp.Err.Error())
