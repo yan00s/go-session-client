@@ -2,7 +2,6 @@ package gosessionclient
 
 import (
 	"crypto/tls"
-	"fmt"
 	"strings"
 )
 
@@ -12,8 +11,4 @@ func checkLocalHost(proxy string) *tls.Config {
 	} else {
 		return nil
 	}
-}
-
-func customErr(text string, err error) error {
-	return fmt.Errorf("%v: %w", text, err)
 }

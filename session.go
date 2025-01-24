@@ -3,7 +3,7 @@ package gosessionclient
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
@@ -17,7 +17,7 @@ func CreateSession(pcAgent bool) Session {
 	session := Session{}
 	jar, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 
-	tr := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+	tr := &http.Transport{}
 
 	client := &http.Client{Transport: tr, Jar: jar}
 	http2.ConfigureTransport(client.Transport.(*http.Transport))
@@ -32,7 +32,7 @@ func (session *Session) sendReq(ctx context.Context, urlstr string, method strin
 
 	req, err := http.NewRequestWithContext(ctx, method, urlstr, reader)
 	if err != nil {
-		result.Err = customErr("Error on create request", err)
+		result.Err = fmt.Errorf("Error on create request: %w", err)
 		return result
 	}
 
@@ -41,14 +41,15 @@ func (session *Session) sendReq(ctx context.Context, urlstr string, method strin
 	resp, err := session.Client.Do(req)
 
 	if err != nil {
-		result.Err = customErr("Error on send requests", err)
+		result.Err = fmt.Errorf("Error on send requests: %w", err)
 		return result
 	}
 
 	body, err := readBody(resp)
+	defer resp.Body.Close()
 
 	if err != nil {
-		result.Err = customErr("Error on read result response", err)
+		result.Err = fmt.Errorf("Error on read result response: %w", err)
 		return result
 	}
 
@@ -67,7 +68,7 @@ func (session *Session) sendReq(ctx context.Context, urlstr string, method strin
 // Parameters:
 // - url: The target URL for the request.
 // - method: The HTTP method to use (e.g., GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE).
-// - timeout: The maximum duration for the request context (e.g., 30 * time.Second).
+// - timeout: The maximum duration for the one request context (e.g., 30 * time.Second).
 // - retryCount: The number of retry attempts if the request fails.
 // - retryDelay: The duration to wait between retries (e.g., 2 * time.Second).
 // - dataStr: (Optional) A string to be sent as the request body, if provided.
@@ -79,18 +80,25 @@ func (session *Session) SendReqWithRetry(url, method string, timeout time.Durati
 	var reader io.Reader
 
 	if len(dataStr) > 0 {
+		// Use only first element as data for request
 		data := []byte(dataStr[0])
 		reader = bytes.NewReader(data)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
 	for i := 0; i < retryCount; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
 		result = session.sendReq(ctx, url, method, reader)
+
 		if result.Err == nil {
 			break
 		}
+
+		if ctx.Err() != nil {
+			result.Err = fmt.Errorf("Request timed out: %w", ctx.Err())
+			break
+		}
+
 		time.Sleep(retryDelay)
 	}
 	return result
@@ -111,6 +119,7 @@ func (session *Session) SendReq(url, method string, timeout time.Duration, dataS
 	var reader io.Reader
 
 	if len(dataStr) > 0 {
+		// Use only first element as data for request
 		data := []byte(dataStr[0])
 		reader = bytes.NewReader(data)
 	}
@@ -126,10 +135,11 @@ func (res *Response) String() string {
 }
 
 func readBody(resp *http.Response) ([]byte, error) {
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
+	// limit 100MB
+	limitedReader := io.LimitReader(resp.Body, 100*1024*1024)
+	body, err := io.ReadAll(limitedReader)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 	return body, nil
 }

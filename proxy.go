@@ -1,7 +1,6 @@
 package gosessionclient
 
 import (
-	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
@@ -22,12 +21,12 @@ func (session *Session) SetProxy(proxy string, timeout int) error {
 
 	parsedURL, err := url.Parse(proxy)
 	if err != nil {
-		return customErr("failed to parse proxy URL", err)
+		return fmt.Errorf("failed to parse proxy URL: %w", err)
 	}
 
 	conn, err := net.DialTimeout("tcp", parsedURL.Host, time.Duration(timeout)*time.Second)
 	if err != nil {
-		return customErr("failed to connect to proxy", err)
+		return fmt.Errorf("failed to connect to proxy: %w", err)
 	}
 	defer conn.Close()
 
@@ -51,10 +50,10 @@ func getTransport(parsedURL *url.URL) (*http.Transport, error) {
 
 	switch parsedURL.Scheme {
 	case "http":
-		tr = &http.Transport{Proxy: http.ProxyURL(parsedURL), TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+		tr = &http.Transport{Proxy: http.ProxyURL(parsedURL), TLSClientConfig: checkLocalHost(parsedURL.String())}
 	case "socks4", "socks4a", "socks5": // "socks5://user:password@127.0.0.1:1080?timeout=5s"
 		dialSocksProxy := socks.Dial(parsedURL.String())
-		tr = &http.Transport{Dial: dialSocksProxy}
+		tr = &http.Transport{Dial: dialSocksProxy, TLSClientConfig: checkLocalHost(parsedURL.String())}
 	default:
 		return nil, fmt.Errorf("unsupported proxy scheme: %s", parsedURL.Scheme)
 	}
