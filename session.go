@@ -60,28 +60,22 @@ func (session *Session) sendReq(ctx context.Context, urlstr string, method strin
 	return result
 }
 
-func (session *Session) sendReqWithRetry(ctx context.Context, urlstr string, method string, reader io.Reader, retries int, delay time.Duration) *Response {
-	var result *Response
-	for i := 0; i < retries; i++ {
-		result = session.sendReq(ctx, urlstr, method, reader)
-		if result.Err == nil {
-			break
-		}
-		time.Sleep(delay)
-	}
-	return result
-}
-
-// SendReq sends an HTTP request with the specified method, retry count, timeout, and retry delay, along with optional data (if dataStr is provided, it will be used as the request body).
+// SendReqWithRetry sends an HTTP request with retry logic.
+// This function allows specifying the HTTP method, timeout duration, number of retries,
+// delay between retries, and optional request body data.
+//
 // Parameters:
-// - url: The URL to which the request is sent.
-// - method: The HTTP method (GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE).
-// - retryCount: The number of retry attempts in case of an error.
-// - timeout: The timeout duration for each request (e.g., 30 * time.Second).
-// - retryDelay: The delay between retry attempts (e.g., 2 * time.Second).
-// - dataStr: Optional data to be sent in the request body.
-// Returns: A pointer to a Response struct containing the result of the request.
-func (session *Session) SendReq(url, method string, retryCount int, timeout time.Duration, retryDelay time.Duration, dataStr ...string) *Response {
+// - url: The target URL for the request.
+// - method: The HTTP method to use (e.g., GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE).
+// - timeout: The maximum duration for the request context (e.g., 30 * time.Second).
+// - retryCount: The number of retry attempts if the request fails.
+// - retryDelay: The duration to wait between retries (e.g., 2 * time.Second).
+// - dataStr: (Optional) A string to be sent as the request body, if provided.
+//
+// Returns:
+// A pointer to a Response struct containing the result of the request, including any errors.
+func (session *Session) SendReqWithRetry(url, method string, timeout time.Duration, retryCount int, retryDelay time.Duration, dataStr ...string) *Response {
+	var result *Response
 	var reader io.Reader
 
 	if len(dataStr) > 0 {
@@ -92,7 +86,39 @@ func (session *Session) SendReq(url, method string, retryCount int, timeout time
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	return session.sendReqWithRetry(ctx, url, method, reader, retryCount, retryDelay) // Example retries
+	for i := 0; i < retryCount; i++ {
+		result = session.sendReq(ctx, url, method, reader)
+		if result.Err == nil {
+			break
+		}
+		time.Sleep(retryDelay)
+	}
+	return result
+}
+
+// SendReq sends an HTTP request without retry logic.
+// This function allows specifying the HTTP method, timeout duration, and optional request body data.
+//
+// Parameters:
+// - url: The target URL for the request.
+// - method: The HTTP method to use (e.g., GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE).
+// - timeout: The maximum duration for the request context (e.g., 30 * time.Second).
+// - dataStr: (Optional) A string to be sent as the request body, if provided.
+//
+// Returns:
+// A pointer to a Response struct containing the result of the request, including any errors.
+func (session *Session) SendReq(url, method string, timeout time.Duration, dataStr ...string) *Response {
+	var reader io.Reader
+
+	if len(dataStr) > 0 {
+		data := []byte(dataStr[0])
+		reader = bytes.NewReader(data)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	return session.sendReq(ctx, url, method, reader)
 }
 
 func (res *Response) String() string {
