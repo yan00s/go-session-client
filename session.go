@@ -66,12 +66,12 @@ func (session *Session) sendReq(ctx context.Context, urlstr string, method strin
 // delay between retries, and optional request body data.
 //
 // Parameters:
-// - url: The target URL for the request.
-// - method: The HTTP method to use (e.g., GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE).
-// - timeout: The maximum duration for the one request context (e.g., 30 * time.Second).
-// - retryCount: The number of retry attempts if the request fails.
-// - retryDelay: The duration to wait between retries (e.g., 2 * time.Second).
-// - dataStr: (Optional) A string to be sent as the request body, if provided.
+//   - url: The target URL for the request.
+//   - method: The HTTP method to use (e.g., GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE).
+//   - timeout: The maximum duration for the one request context (e.g., 30 * time.Second).
+//   - retryCount: The number of retry attempts if the request fails.
+//   - retryDelay: The duration to wait between retries (e.g., 2 * time.Second).
+//   - dataStr: (Optional) A string to be sent as the request body, if provided.
 //
 // Returns:
 // A pointer to a Response struct containing the result of the request, including any errors.
@@ -108,10 +108,10 @@ func (session *Session) SendReqWithRetry(url, method string, timeout time.Durati
 // This function allows specifying the HTTP method, timeout duration, and optional request body data.
 //
 // Parameters:
-// - url: The target URL for the request.
-// - method: The HTTP method to use (e.g., GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE).
-// - timeout: The maximum duration for the request context (e.g., 30 * time.Second).
-// - dataStr: (Optional) A string to be sent as the request body, if provided.
+//   - url: The target URL for the request.
+//   - method: The HTTP method to use (e.g., GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE).
+//   - timeout: The maximum duration for the request context (e.g., 30 * time.Second).
+//   - dataStr: (Optional) A string to be sent as the request body, if provided.
 //
 // Returns:
 // A pointer to a Response struct containing the result of the request, including any errors.
