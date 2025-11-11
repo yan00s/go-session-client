@@ -27,21 +27,31 @@ func CreateSession(pcAgent bool) Session {
 	return session
 }
 
+func cloneHeader(h http.Header) http.Header {
+	dst := make(http.Header, len(h))
+	for k, vv := range h {
+		vv2 := make([]string, len(vv))
+		copy(vv2, vv)
+		dst[k] = vv2
+	}
+	return dst
+}
+
 func (session *Session) sendReq(ctx context.Context, urlstr string, method string, reader io.Reader) *Response {
 	result := &Response{}
 
 	req, err := http.NewRequestWithContext(ctx, method, urlstr, reader)
 	if err != nil {
-		result.Err = fmt.Errorf("Error on create request: %w", err)
+		result.Err = fmt.Errorf("error on create request: %w", err)
 		return result
 	}
 
-	req.Header = session.Headers
+	req.Header = cloneHeader(session.Headers)
 
 	resp, err := session.Client.Do(req)
 
 	if err != nil {
-		result.Err = fmt.Errorf("Error on send requests: %w", err)
+		result.Err = fmt.Errorf("error on send requests: %w", err)
 		return result
 	}
 
@@ -49,7 +59,7 @@ func (session *Session) sendReq(ctx context.Context, urlstr string, method strin
 	defer resp.Body.Close()
 
 	if err != nil {
-		result.Err = fmt.Errorf("Error on read result response: %w", err)
+		result.Err = fmt.Errorf("error on read result response: %w", err)
 		return result
 	}
 
@@ -95,7 +105,7 @@ func (session *Session) SendReqWithRetry(url, method string, timeout time.Durati
 		}
 
 		if ctx.Err() != nil {
-			result.Err = fmt.Errorf("Request timed out: %w", ctx.Err())
+			result.Err = fmt.Errorf("request timed out: %w", ctx.Err())
 			break
 		}
 
